@@ -1,0 +1,182 @@
+<html>
+<head>
+<title>Визуализация ДЗ.ipynb</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #808080;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #cc7832;}
+.s3 { color: #6a8759;}
+.s4 { color: #6897bb;}
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+Визуализация ДЗ.ipynb</font>
+</center></td></tr></table>
+<pre><span class="s0">#%% md 
+</span><span class="s1">**Импорт всех необходимых библиотек** 
+</span><span class="s0">#%% 
+</span><span class="s2">import </span><span class="s1">pandas </span><span class="s2">as </span><span class="s1">pd</span>
+<span class="s2">import </span><span class="s1">numpy </span><span class="s2">as </span><span class="s1">np</span>
+<span class="s2">import </span><span class="s1">matplotlib.pyplot </span><span class="s2">as </span><span class="s1">plt</span>
+<span class="s2">import </span><span class="s1">seaborn </span><span class="s2">as </span><span class="s1">sns</span>
+<span class="s1">pd.set_option(</span><span class="s3">&quot;display.max_rows&quot;</span><span class="s2">, </span><span class="s4">20</span><span class="s1">)</span>
+<span class="s1">pd.set_option(</span><span class="s3">&quot;display.max_columns&quot;</span><span class="s2">, </span><span class="s4">20</span><span class="s1">)</span>
+<span class="s1">pd.set_option(</span><span class="s3">&quot;display.precision&quot;</span><span class="s2">, </span><span class="s4">4</span><span class="s1">)</span>
+<span class="s1">pd.set_option(</span><span class="s3">&quot;plotting.backend&quot;</span><span class="s2">, </span><span class="s3">&quot;matplotlib&quot;</span><span class="s1">)</span>
+
+<span class="s2">from </span><span class="s1">sklearn.linear_model </span><span class="s2">import </span><span class="s1">LogisticRegression</span>
+<span class="s2">from </span><span class="s1">sklearn.model_selection </span><span class="s2">import </span><span class="s1">train_test_split</span>
+<span class="s2">from </span><span class="s1">sklearn.preprocessing </span><span class="s2">import </span><span class="s1">StandardScaler</span><span class="s2">, </span><span class="s1">RobustScaler</span>
+<span class="s0">#%% md 
+</span><span class="s1"># 1. Исследовательский анализ данных (exploratory data analysis - EDA) 
+</span><span class="s0">#%% md 
+</span><span class="s1">## 1.1 Словесное описание признаков 
+</span><span class="s0">#%% md 
+</span><span class="s1">- __ID__ - Уникальный номер спортсмена 
+- __Name__ - ФИО спортсмена 
+- __Sex__ - Пол: M or F - Мужчина или женщина 
+- __Age__ - Возраст спортсмена 
+- __Height__ - Рост в см. 
+- __Weight__ - Вес в кг. 
+- __Team__ - Название команды 
+- __NOC__ - 3-буквенный код Национального олимпийского комитета 
+- __Games__ - Год и сезон проведения олимпиады, напр: Summer 2000 или Winter 2000 
+- __Year__ - Год проведения олимпиады 
+- __Season__ - Сезон проведения олимпиады: Summer, Winter 
+- __City__ - Город проведения олимпиады 
+- __Sport__ - Название вида спорта 
+- __Event__ - Название мероприятия 
+- __Medal__ - Медаль: Gold, Silver, Bronze, or NA 
+</span><span class="s0">#%% md 
+</span><span class="s1">## 1.2 Загрузка данных общее описание набора данных 
+</span><span class="s0">#%% 
+</span><span class="s1">PATH = </span><span class="s3">'https://github.com/aksenov7/Kaggle_competition_group/blob/master/athlete_events.csv.zip?raw=true'</span>
+<span class="s1">df = pd.read_csv(PATH</span><span class="s2">, </span><span class="s1">compression=</span><span class="s3">'zip'</span><span class="s1">)</span>
+<span class="s1">df.head()</span>
+<span class="s0">#%% 
+</span><span class="s1">df.shape</span>
+<span class="s0">#%% 
+</span><span class="s1">df.info()</span>
+<span class="s0">#%% md 
+</span><span class="s1">- Видим большое кол-во пропусков Medal, но будем считать, что это люди, которые не получили медаль. 
+- Что более существенно, так это пропуски по Weight, Height, Age 
+ 
+</span><span class="s0">#%% 
+</span><span class="s1">df.Sex.value_counts()</span>
+<span class="s0">#%% 
+</span><span class="s1">df.Sex.value_counts(normalize=</span><span class="s2">True</span><span class="s1">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">Видим преобладание мужского пола 
+</span><span class="s0">#%% 
+</span><span class="s1">df.describe()</span>
+<span class="s0">#%% md 
+</span><span class="s1">**Первичные выводы по числовым данным** 
+* Возраст людей в выборке от 10 до 97 лет. В среднем возраст варьируется от 19 до 32 лет. Младшие 21 покрывают 25%, 21-28 летние 50%. Остальные 25% это люди от 28 до 97. 
+* Рост от 127 до 226 см. В среднем 175. СКО = 10. 
+* Вес от 25 до 214 кг. В среднем 70.7 кг. 
+* Год проведения лучше рассмотреть отдельно. Но можно сказать, что данные приведены с 1896-2016г. 
+</span><span class="s0">#%% 
+</span><span class="s1">df.describe(include=object)</span>
+<span class="s0">#%% md 
+</span><span class="s1">**Первичные выводы по строковым данным** 
+* 1184 уникальных команд. Самыми активными являются United States - они поучаствовали в 17847 соревнованиях. 
+* Самым же активным спортсменом является Robert Tail McKenzie - 58 участий. 
+* Самой популярной игрой является 2000 Summer - 13821 участников. 
+* В выборке преобладают мужчины - 72.5%. 
+* Как уже говорилось. Больше всего игр проводятся летом - 82%. 
+* Самым популярным видом спорта является Athletics - 38624 человека. 
+* Самый популярный Event - Football Men's Football. Всего различных ивентов - 765. 
+</span><span class="s0">#%% md 
+</span><span class="s1">### Медали: 
+Теперь посмотрим на медалистов 
+</span><span class="s0">#%% 
+</span><span class="s1">golds = df[(df[</span><span class="s3">'Medal'</span><span class="s1">] == </span><span class="s3">'Gold'</span><span class="s1">)]</span>
+<span class="s1">golds.Team.describe(include=object)</span>
+<span class="s0">#%% md 
+</span><span class="s1">* United States выигрывали золото чаще других. 
+</span><span class="s0">#%% 
+</span><span class="s1">df.groupby(</span><span class="s3">'Medal'</span><span class="s1">).describe(include=object)[</span><span class="s3">'Name'</span><span class="s1">]</span>
+<span class="s0">#%% md 
+</span><span class="s1">* Больше всего Gold получал Michael Fred Phelps, II - 23 раза. 
+* Silver - Mikhail Yakovlevich Voronin - 6 раз. 
+* Bronze - Heikki Ilmari Savolainen - 6 раз. 
+</span><span class="s0">#%% 
+</span><span class="s1">df.groupby(</span><span class="s3">'Medal'</span><span class="s1">).describe(include=object)[</span><span class="s3">'Team'</span><span class="s1">]</span>
+<span class="s0">#%% md 
+</span><span class="s1">* United States получали медали чаще остальных. И почти половина из них Gold 
+</span><span class="s0">#%% 
+</span><span class="s1">no_medal = df[df[</span><span class="s3">'Medal'</span><span class="s1">].isna()]</span>
+<span class="s1">no_medal.describe(include=object)</span>
+<span class="s0">#%% md 
+</span><span class="s1">* United States не получали медали чаще остальных. 
+* Robert Tait McKenzie не получал медали чаще остальных - 57 раз. 
+</span><span class="s0">#%% md 
+</span>
+<span class="s0">#%% md 
+</span><span class="s1">## 1.3 Визуальный и статистический анализ данных 
+</span><span class="s0">#%% 
+#Кол-во мужчин и женщин по возрасту</span>
+<span class="s1">plt.figure(figsize=(</span><span class="s4">18</span><span class="s2">,</span><span class="s4">8</span><span class="s1">))</span>
+<span class="s1">sns.histplot(data=df</span><span class="s2">, </span><span class="s1">x=</span><span class="s3">'Age'</span><span class="s2">, </span><span class="s1">hue=</span><span class="s3">'Sex'</span><span class="s1">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">* Распределение нормальное, что и можно было ожидать. 
+* Видно, что более молодых женщин (до 18 лет) больше, чем мужчин. 
+</span><span class="s0">#%% md 
+</span><span class="s1">### По годам 
+</span><span class="s0">#%% 
+#Средний возраст по годам</span>
+<span class="s1">gr = df.groupby(</span><span class="s3">'Year'</span><span class="s1">).mean()</span>
+<span class="s1">plt.figure(figsize=(</span><span class="s4">18</span><span class="s2">,</span><span class="s4">8</span><span class="s1">))</span>
+<span class="s1">gr[</span><span class="s3">'Age'</span><span class="s1">].plot()</span>
+<span class="s0">#%% md 
+</span><span class="s1">Из графика видно, что ранее 195-ых в основном преобладали люди с возрастом ~28, к 1980 году средний возраст упал до 24, а потом опять начал расти. 
+</span><span class="s0">#%% 
+#Кол-во мужчин и женщин по годам</span>
+<span class="s1">silver = df</span>
+<span class="s1">plt.figure(figsize=(</span><span class="s4">18</span><span class="s2">,</span><span class="s4">8</span><span class="s1">))</span>
+<span class="s1">sns.histplot(x=</span><span class="s3">&quot;Year&quot;</span><span class="s2">, </span><span class="s1">hue=</span><span class="s3">&quot;Sex&quot;</span><span class="s2">, </span><span class="s1">data=df)</span>
+<span class="s0">#%% md 
+</span><span class="s1">### По времени года 
+</span><span class="s0">#%% 
+#Кол-во мужчин и женщин с Gold по возрасту</span>
+<span class="s1">plt.figure(figsize=(</span><span class="s4">18</span><span class="s2">, </span><span class="s4">8</span><span class="s1">))</span>
+<span class="s1">sns.countplot(data=df</span><span class="s2">, </span><span class="s1">x=</span><span class="s3">'Year'</span><span class="s2">, </span><span class="s1">hue=</span><span class="s3">'Season'</span><span class="s1">)</span>
+<span class="s0">#%% md 
+</span><span class="s1">Зимние виды спорта проводятся реже. А до 1924 они вообще не проводились. 
+</span><span class="s0">#%% md 
+</span><span class="s1">### Корреляции 
+</span><span class="s0">#%% 
+</span><span class="s1">df.corr()</span>
+<span class="s0">#%% 
+# Посмотрим на тепловую карту</span>
+<span class="s1">plt.figure(figsize=(</span><span class="s4">8</span><span class="s2">,</span><span class="s4">8</span><span class="s1">))</span>
+<span class="s1">sns.heatmap(df.corr()</span><span class="s2">, </span><span class="s1">annot=</span><span class="s2">True, </span><span class="s1">cmap=</span><span class="s3">&quot;YlGnBu&quot;</span><span class="s2">, </span><span class="s1">cbar=</span><span class="s2">False</span><span class="s1">);</span>
+<span class="s0">#%% md 
+</span><span class="s1">* Коэф. корреляции между Height и Weight равен 0.8, что ожидаемо 
+* Также немного коррелируют между собой Age и Height или Weight 
+* Остальные данные вообще не коррелируют между собой 
+</span><span class="s0">#%% 
+</span><span class="s1">df.plot.scatter(x=</span><span class="s3">'Height'</span><span class="s2">, </span><span class="s1">y=</span><span class="s3">'Weight'</span><span class="s1">)</span>
+<span class="s0">#%% 
+# Количество медалей по командам</span>
+<span class="s1">plt.figure(figsize=(</span><span class="s4">18</span><span class="s2">,</span><span class="s4">9</span><span class="s1">))</span>
+<span class="s1">medals = df.groupby(</span><span class="s3">'Team'</span><span class="s1">)[</span><span class="s3">'Medal'</span><span class="s1">].describe(include=object)[</span><span class="s3">'count'</span><span class="s1">].sort_values(ascending=</span><span class="s2">False</span><span class="s1">)[:</span><span class="s4">50</span><span class="s1">]</span>
+<span class="s1">medals.plot()</span>
+<span class="s1">medals</span>
+<span class="s0">#%% md 
+</span><span class="s1">Количество полученных медалей 50 лучших команд. 
+Видно, что United States получили больше всех - 5219, а второе место аж в два раза меньше - 2451. 
+</span><span class="s0">#%% md 
+</span><span class="s1">## Интересные факты 
+* Возраст самого старого спортсмена 97 лет 
+* Возраст самого молодого - 10 лет 
+* Наименьший вес спортсмена - 25 кг 
+* Раньше спортсменок почти не было, но к настоящему моменту наблюдается тенденция равного кол-ва мужчин и женщин 
+* До 1992 года олимпиады проводились каждые 4 года, но начиная с 1992 стали проводить их каждые 2 года, причем каждая вторая олимпиада была менее &quot;масштабной&quot;. 
+* United States выигрывали медали 5219 раз. Это более чем в два раза больше следующей по счету команды.</span></pre>
+</body>
+</html>
